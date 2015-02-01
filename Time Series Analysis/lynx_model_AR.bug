@@ -1,0 +1,22 @@
+
+    model
+    {
+      # priors
+      beta0 ~ dnorm(0,0.001)
+      beta1 ~ dnorm(0,0.001)
+      beta2 ~ dnorm(0,0.001)
+      beta3 ~ dnorm(0,0.001)
+      beta4 ~ dnorm(0,0.001) 
+      
+      # dealing with the first observation
+      lambda[1] <- y[1] 
+         
+      # likelihood
+      for(t in 2:N)
+      {
+        log(lambda[t]) <- beta0 + beta1*sin(2*3.14*beta2*(t-beta3)) 
+                                + beta4*y[t-1] # the autoregressive term
+        y[t] ~ dpois(lambda[t])
+      }
+    }
+    

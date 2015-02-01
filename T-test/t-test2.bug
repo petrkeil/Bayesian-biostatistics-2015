@@ -1,0 +1,19 @@
+
+model
+{
+  # priors
+    mu.f ~ dnorm(0, 0.001)
+    delta ~ dnorm(0, 0.001)
+    tau <- 1/(sigma*sigma)
+    sigma ~ dunif(0,100)
+    
+  # likelihood
+    for(i in 1:N)
+    {
+      y[i] ~ dnorm(mu[i], tau)
+      mu[i] <- mu.f + delta*male[i]
+    }
+
+  # derived quantity
+    mu.m <- mu.f + delta
+}    

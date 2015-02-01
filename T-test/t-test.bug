@@ -1,0 +1,25 @@
+
+model
+{
+  # priors
+    mu.f ~ dnorm(0, 0.001) # Note: tau = 1/variance
+    mu.m ~ dnorm(0, 0.001)
+    tau <- 1/(sigma*sigma)
+    sigma ~ dunif(0,100)
+  
+  # likelihood - Females
+    for(i in 1:N.f)
+    {
+      y.f[i] ~ dnorm(mu.f, tau)
+    }
+  
+  # likelihood - Males
+    for(j in 1:N.m)
+    {
+      y.m[j] ~ dnorm(mu.m, tau)
+    }
+
+  # derived quantity:
+    delta <- mu.f - mu.m
+
+}    

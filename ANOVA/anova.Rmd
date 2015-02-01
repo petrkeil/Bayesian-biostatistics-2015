@@ -1,0 +1,200 @@
+One-way ANOVA
+========================================================
+```{r, echo=FALSE}
+  ngroups <- 5
+  nsample <- 10
+  pop.means <- c(50, 40, 45, 55, 60)
+  sigma <- 3
+  
+  n <- ngroups*nsample
+  eps <- rnorm(n, 0, sigma)
+  
+  x <- rep(1:5, rep(nsample, ngroups))
+  means <- rep(pop.means, rep(nsample, ngroups))
+  X <- as.matrix(model.matrix(~as.factor(x)-1))
+  snout <- round( as.numeric(X %*% as.matrix(pop.means) + eps), 2)
+  snakes <- data.frame(population=x, snout.vent=snout)
+  write.csv(snakes, file="snakes.csv", row.names=FALSE)
+```
+
+The Data
+--------
+
+We will use modified data from the example from **Marc Kery's Introduction to WinBUGS for Ecologists**, page 119 (Chapter 9 - ANOVA). The data describe snout-vent lengths in 5 populations of Smooth snake (*Coronella austriaca*) (Uzovka hladka in CZ).
+
+![](figure/snake.png)
+
+```{r, tidy=FALSE, fig.width=8, fig.height=5}
+# loading the data from my website
+  snakes <- read.csv("http://www.petrkeil.com/wp-content/uploads/2014/02/snakes.csv")
+
+# we will artificially delete 9 data points in the first population
+  snakes <- snakes[-(1:9),]
+
+  summary(snakes)
+
+# plotting the data
+  par(mfrow=c(1,2))
+  plot(snout.vent ~ population, data=snakes,
+       ylab="Snout-vent length [cm]")
+  boxplot(snout.vent ~ population, data=snakes,
+          ylab="Snout-vent length [cm]",
+          xlab="population",
+          col="grey")
+```
+
+********************************************************************************
+
+Fixed-effects ANOVA
+-------------------
+
+For a given snake $i$ in population $j$ **the model** can be written as:
+
+$y_{ij} \sim Normal(\alpha_j, \sigma)$
+
+Here is how we prepare the data:
+```{r, tidy=FALSE}
+  snake.data <- list(y=snakes$snout.vent,
+                     x=snakes$population,
+                     N=nrow(snakes), 
+                     N.pop=5)
+```
+
+Loading the library that communicates with JAGS
+```{r, message=FALSE, warning=FALSE}
+  library(R2jags)
+```
+
+JAGS Model definition:
+```{r, tidy=FALSE}
+cat("
+  model
+  {
+    # priors
+    sigma ~ dunif(0,100)
+    tau <- 1/(sigma*sigma)
+    for(j in 1:N.pop)
+    {
+      alpha[j] ~ dnorm(0, 0.001)
+    }
+  
+    # likelihood
+    for(i in 1:N)
+    {
+      y[i] ~ dnorm(alpha[x[i]], tau)
+    }
+  }
+", file="fixed_anova.txt")
+
+```
+
+And we will fit the model:
+```{r}
+model.fit.fix <- jags(data=snake.data, 
+                        model.file="fixed_anova.txt",
+                        parameters.to.save=c("alpha"),
+                        n.chains=3,
+                        n.iter=2000,
+                        n.burnin=1000,
+                        DIC=FALSE)
+
+plot(as.mcmc(model.fit.fix))
+model.fit.fix
+```
+
+
+********************************************************************************
+
+Random-effects ANOVA
+--------------------
+
+For a given snake $i$ in population $j$ **the model** can be written in a similar way as for the fixed-effects ANOVA above:
+
+$y_{ij} \sim Normal(\alpha_j, \sigma)$
+
+But now we will also add a **random effect**:
+
+$\alpha_j \sim Normal(\mu, \sigma)$
+
+In short, a **random effect means that the parameters itself come from (are outcomes of) a given distribution**, here it is the Normal.
+
+The data stay the same as in the fixed-effect example above.
+
+Loading the library that communicates with JAGS
+```{r, message=FALSE, warning=FALSE}
+  library(R2jags)
+```
+
+JAGS Model definition:
+```{r, tidy=FALSE}
+cat("
+  model
+  {
+    # priors
+    grand.mean ~ dnorm(0, 0.001)
+    grand.sigma ~ dunif(0,100)
+    grand.tau <- 1/(grand.sigma*grand.sigma)
+    group.sigma ~ dunif(0, 100)
+    group.tau <- 1/(group.sigma*group.sigma)
+  
+    for(j in 1:N.pop)
+    {
+      alpha[j] ~ dnorm(grand.mean, grand.tau)
+    }
+  
+    # likelihood
+    for(i in 1:N)
+    {
+      y[i] ~ dnorm(alpha[x[i]], group.tau)
+    }
+  }
+", file="random_anova.txt")
+
+```
+
+And we will fit the model:
+```{r}
+model.fit.rnd <- jags(data=snake.data, 
+               model.file="random_anova.txt",
+               parameters.to.save=c("alpha"),
+               n.chains=3,
+               n.iter=2000,
+               n.burnin=1000,
+               DIC=FALSE)
+
+plot(as.mcmc(model.fit.rnd))
+model.fit.rnd
+```
+
+********************************************************************************
+Plotting the posteriors from both models
+----------------------------------------
+
+Let's extract the medians posterior distributions of the expected values of $\alpha_j$ and their 95% credible intervals:
+```{r}
+  rnd.alphas <- model.fit.rnd$BUGSoutput$summary
+  fix.alphas <- model.fit.fix$BUGSoutput$summary
+  
+  plot(snout.vent ~ population, data=snakes,
+       ylab="Snout-vent length [cm]", col="grey", pch=19)
+  points(rnd.alphas[,'2.5%'], col="red", pch="-", cex=1.5)
+  points(fix.alphas[,'2.5%'], col="blue", pch="-", cex=1.5) 
+  points(rnd.alphas[,'97.5%'], col="red", pch="-", cex=1.5)
+  points(fix.alphas[,'97.5%'], col="blue", pch="-", cex=1.5) 
+  points(rnd.alphas[,'50%'], col="red", pch="+", cex=1.5)
+  points(fix.alphas[,'50%'], col="blue", pch="+", cex=1.5) 
+
+  abline(h=mean(snakes$snout.vent), col="grey")
+```
+
+Note the **shrinkage** effect!
+
+Also, how would you plot the ```grand.mean``` estimated in the random effects model?
+How would you extract the between- and within- group variances?
+
+
+
+
+
+
+

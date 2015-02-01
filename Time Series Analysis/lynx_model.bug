@@ -1,0 +1,22 @@
+
+    model
+    {
+      # priors
+      beta0 ~ dnorm(0,0.001)
+      beta1 ~ dnorm(0,0.001)
+      beta2 ~ dnorm(0,0.001)
+      beta3 ~ dnorm(0,0.001)
+      beta4 ~ dnorm(0,0.001) 
+      beta5 ~ dnorm(0,0.001)
+    
+      lambda[1] <- lynx[1]
+         
+      # likelihood
+      for(t in 2:N)
+      {
+        log(lambda[t]) <- beta0 + beta1*sin(2*3.14*beta3*(t-beta4)) 
+                                + beta5*lynx[t-1]
+        lynx[t] ~ dpois(lambda[t])
+      }
+    }
+    

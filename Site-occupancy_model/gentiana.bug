@@ -1,0 +1,20 @@
+
+  # priors
+    alpha.occ ~ dunif(-10, 10)
+    beta.occ ~ dunif(-10, 10)
+    alpha.det ~ dunif(-10, 10)
+    beta.det ~ dunif(-10, 10)
+    
+  # likelihood 
+    for(i in 1:N.sites)
+    {
+      z[i] ~ dbern(psi[i]) # true occupancy at site i
+      logit(psi[i]) <- alpha.occ + beta.occ*humidity[i] 
+   
+      for(j in 1:N.visit)
+      {
+         logit(p[i,j]) <- alpha.det + beta.det*humidity[i] # detection probability
+         eff.p[i, j] <- z[i] * p[i, j] # p of observing the present individual
+         y[i,j] ~ dbern(eff.p[i, j]) # detection/non-detection at [i,j]
+      }  
+    }

@@ -1,0 +1,169 @@
+Bayesian Biostatistics
+========================================================
+author: Petr Keil 
+date: February 2015
+
+![eu](introduction-figure/eu.png)
+
+![eu](introduction-figure/fp7.png)
+
+Contents
+========================================================
+***DAY 1***
+- Likelihood, probability distributions
+- First Bayesian steps
+
+***DAY 2***
+- First Bayesian steps
+- Classical models (regression, ANOVA)
+
+***DAY 3***
+- Advanced models (mixed, time series)
+- Inference, uncertainty, model selection.
+
+========================================================
+
+![eu](introduction-figure/plato.png)
+
+*Statistical models are stories about how the data came to be.*
+
+
+Data
+========================================================
+```{r, echo=FALSE}
+  x <- sort(rnorm(100))
+  y <- 2 + 3*x + rnorm(100)
+  plot(x,y)
+```
+
+Data, model, parameters
+========================================================
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+  plot(x,y)
+  mx <- predict(lm(y~x), interval="predict" ) 
+  lines(x, mx[,'fit'], col="red")
+  lines(x, mx[,'lwr'], lty=2, col="red")
+  lines(x, mx[,'upr'], lty=2, col="red")
+```
+
+$\mu_i = a + b \times x_i$
+
+$y_i \sim Normal(\mu_i, \sigma)$
+
+Data
+========================================================
+```{r, echo=FALSE}  
+  x <- rnorm(n=100, mean=10, sd=1)
+  hist(x, freq=FALSE, ylab="Density", main=NULL)
+  points(x, rep(0, times=100))
+```
+
+Data, model, parameters
+========================================================
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+  x <- rnorm(n=100, mean=10, sd=1)
+  hist(x, freq=FALSE, ylab="Density", main=NULL)
+  points(x, rep(0, times=100))
+  x.axis <- seq(from=min(x), to=max(x), by=0.1)
+  lines(x.axis, dnorm(x.axis, mean=10, sd=1), col="red")
+```
+
+$x_i \sim Normal(\mu, \sigma)$
+
+
+Data, model, parameters
+========================================================
+
+Let's use $y$ for data, and $\theta$ for parameters.
+
+$p(\theta | y, model)$ or $p(y | \theta, model)$ 
+
+The model is always given (assumed), and it is usually omitted:
+
+$p(y|\theta)$ or $p(\theta|y)$
+
+Why go Bayesian?
+========================================================
+- Numerically tractable for models of any **complexity**.
+- Unbiased for **small sample sizes**.
+- It works with **uncertainty**.
+- Extremely **simple inference**.
+- Possibility to use **prior information**.
+
+The pitfalls
+========================================================
+- Steep learning curve.
+- Tedious.
+- You will have to learn some programming.
+- Computationally intensive, slow.
+- Problematic model selection.
+- Not an exploratory analysis tool.
+
+To be thrown away
+========================================================
+- Null hypotheses formulation and testing
+- P-values, significance at $\alpha=0.05$, ...
+- Degrees of freedom, test statistics
+- Post-hoc comparisons
+- Sample size corrections
+
+Remains
+========================================================
+- Regression, t-test, ANOVA, ANCOVA, MANOVA
+- Generalized Linear Models (GLM)
+- GAM, GLS, autoregressive models
+- Mixed-effects models
+
+Myths about Bayes
+========================================================
+- It is a 'subjective' statistics.
+- The main reason to go Bayesian is to use **the Priors**.
+- Bayesian statistics is heavy on equations.
+
+Basic probability jargon
+========================================================
+- $P(A)$ vs $p(A)$ - Probability vs probability density (or mass) function
+- $P(A \cap B)$ - Joint (intersection) probability (AND)
+- $P(A \cup B)$ - Union probability (OR)
+- $P(A|B)$ - Conditional probability (GIVEN THAT)
+
+Indexing in R and BUGS: 1 dimension
+========================================================
+```{r, tidy=FALSE}
+  x <- c(2.3, 4.7, 2.1, 1.8, 0.2)
+  x
+  x[3] 
+```
+
+Indexing in R and BUGS: 2 dimensions
+========================================================
+```{r, tidy=FALSE}
+  X <- matrix(c(2.3, 4.7, 2.1, 1.8), 
+              nrow=2, ncol=2)
+  X
+  X[2,1] 
+```
+
+Lists in R
+========================================================
+```{r, tidy=FALSE}
+  x <- c(2.3, 4.7, 2.1, 1.8, 0.2)
+  N <- 5
+  data <- list(x=x, N=N)
+  data
+  data$x # indexing by name
+```
+
+For loops in R (and BUGS)
+========================================================
+```{r, tidy=FALSE}
+for (i in 1:5)
+{
+  statement <- paste("Iteration", i)
+  print(statement)
+}
+```
+
+
+
+

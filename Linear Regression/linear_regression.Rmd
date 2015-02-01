@@ -1,0 +1,196 @@
+---
+title: "Linear regression"
+author: "Petr Keil"
+date: "January 2015"
+output:
+  html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: cerulean
+  pdf_document: default
+---
+
+# The data
+
+We will download data from **Michael Crawley's R Book**, Chapter 10 (Linear Regression). The data show the growht of catepillars fed on experimental diets differing in their tannin contnent.
+
+![danaus caterpillar figure](figure/danaus.png)
+![danaus caterpillar figure](figure/Tannic_acid.png)
+
+```{r}
+  catepil <- read.table("http://www.bio.ic.ac.uk/research/mjcraw/therbook/data/regression.txt", sep="\t", header=TRUE)
+  catepil
+```
+
+The data look like this:
+
+```{r, fig.width=4, fig.height=4}
+  plot(growth~tannin, data=catepil)
+```
+
+# The model
+
+The classical notation:
+$$ growth_i = a + b \times tannin_i + \epsilon_i  $$
+$$ \epsilon_i \sim Normal(0, \sigma)$$
+
+
+An alternative ("Bayesian"") version:
+$$ \mu_i = a + b \times tannin_i $$
+$$ growth_i \sim Normal(\mu_i, \sigma) $$
+
+
+# Fitting the model using a predefined function (least squares)
+
+```{r, fig.width=4, fig.height=4}
+  model.lm <- lm(growth~tannin, data=catepil)
+  plot(growth~tannin, data=catepil)
+  abline(model.lm)
+  summary(model.lm)
+```
+
+
+# Fitting the model by MCMC in JAGS
+
+
+First, we will put all of our data in a list object
+
+```{r}
+linreg.data <- list(N=9,
+                    tannin=catepil$tannin,
+                    growth=catepil$growth)
+linreg.data
+
+```
+
+The R library that connects R with JAGS:
+
+```{r, fig.width=4, fig.height=4, tidy=FALSE, message=FALSE, warning=FALSE}
+library(R2jags)
+```
+
+This is the JAGS definition of the model:
+
+```{r, tidy=FALSE, message=FALSE, warning=FALSE}
+cat("
+  model
+  {
+    # priors
+    a ~ dnorm(0, 0.001) # intercept
+    b ~ dnorm(0, 0.001) # slope
+    sigma ~ dunif(0, 100) # standard deviation
+  
+    tau <- 1/(sigma*sigma) # precision
+    
+    # likelihood
+   for(i in 1:N)
+   {
+    growth[i] ~ dnorm(mu[i], tau)
+    mu[i] <- a + b*tannin[i]
+   }
+  }
+", file="linreg_model.bug")
+```
+
+The MCMC sampling done by ```jags()``` function:
+
+```{r, tidy=FALSE, message=FALSE, warning=FALSE}
+model.fit <- jags(data=linreg.data, 
+               model.file="linreg_model.bug",
+               parameters.to.save=c("a", "b", "sigma"),
+               n.chains=3,
+               n.iter=2000,
+               n.burnin=1000)
+```
+
+And we can examine the results:
+
+```{r, fig.width=8, fig.height=12}
+plot(as.mcmc(model.fit))
+model.fit
+plot(model.fit)
+```
+
+
+# The full Bayesian output, predictions and all that
+
+Here we will use library ```rjags``` that gives more control over the MCMC (as opposed to ```R2jags```):
+
+```{r, fig.width=4, fig.height=4, tidy=FALSE, message=FALSE, warning=FALSE}
+library(rjags)
+
+cat("
+  model
+  {
+    # priors
+    a ~ dnorm(0, 0.001)
+    b ~ dnorm(0, 0.001)
+    sigma ~ dunif(0, 100)
+  
+    tau <- 1/(sigma*sigma)
+    
+    # likelihood
+   for(i in 1:N)
+   {
+    growth[i] ~ dnorm(mu[i], tau)
+    mu[i] <- a + b*tannin[i]
+   }
+  
+   # predictions
+   for(i in 1:N)
+   {
+    prediction[i] ~ dnorm(mu[i], tau) 
+   }
+  }
+", file="linreg_model.bug")
+```
+
+Initializing the model:
+
+```{r, fig.width=4, fig.height=4, tidy=FALSE, message=FALSE, warning=FALSE}
+jm <- jags.model(data=linreg.data, 
+                 file="linreg_model.bug",
+                 n.chains = 3, n.adapt=1000)
+```
+
+The burn-in phase:
+
+```{r}
+update(jm, n.iter=1000)
+```
+
+We will monitor the predicted values:
+
+```{r}
+params <- c("prediction")
+samps <- coda.samples(jm, params, n.iter=1000)     
+predictions <- summary(samps)$quantiles
+```
+
+And here we will monitor the expected values:
+
+```{r}
+params <- c("mu")
+samps <- coda.samples(jm, params, n.iter=1000)     
+mu <- summary(samps)$quantiles
+```
+
+Plotting the predictions:
+
+```{r, fig.width=5, fig.height=5}
+plot(c(0,8), c(0,18), type="n", xlab="tannin", ylab="growth")
+points(catepil$tannin, catepil$growth, pch=19)
+lines(catepil$tannin, mu[,"50%"], col="red")
+lines(catepil$tannin, mu[,"2.5%"], col="red", lty=2)
+lines(catepil$tannin, mu[,"97.5%"], col="red", lty=2)
+lines(catepil$tannin, predictions[,"2.5%"], lty=3)
+lines(catepil$tannin, predictions[,"97.5%"], lty=3)
+```
+
+The figure shows the **median expected value** (solid red), **95% credible intervals of the expected value** (dashed red) and **95% prediction intervals** (dotted). 
+
+.
+.
+.
+
+
