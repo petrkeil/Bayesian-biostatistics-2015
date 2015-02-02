@@ -1,5 +1,15 @@
-One-way ANOVA
-========================================================
+---
+title: "One-way ANOVA"
+author: "Petr Keil"
+date: "February 2015"
+output:
+  html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: cerulean
+  pdf_document: default
+---
+
 ```{r, echo=FALSE}
   ngroups <- 5
   nsample <- 10
@@ -17,8 +27,7 @@ One-way ANOVA
   write.csv(snakes, file="snakes.csv", row.names=FALSE)
 ```
 
-The Data
---------
+# The Data
 
 We will use modified data from the example from **Marc Kery's Introduction to WinBUGS for Ecologists**, page 119 (Chapter 9 - ANOVA). The data describe snout-vent lengths in 5 populations of Smooth snake (*Coronella austriaca*) (Uzovka hladka in CZ).
 
@@ -43,10 +52,7 @@ We will use modified data from the example from **Marc Kery's Introduction to Wi
           col="grey")
 ```
 
-********************************************************************************
-
-Fixed-effects ANOVA
--------------------
+# Fixed-effects ANOVA
 
 For a given snake $i$ in population $j$ **the model** can be written as:
 
@@ -103,10 +109,7 @@ model.fit.fix
 ```
 
 
-********************************************************************************
-
-Random-effects ANOVA
---------------------
+# Random-effects ANOVA
 
 For a given snake $i$ in population $j$ **the model** can be written in a similar way as for the fixed-effects ANOVA above:
 
@@ -166,9 +169,8 @@ plot(as.mcmc(model.fit.rnd))
 model.fit.rnd
 ```
 
-********************************************************************************
-Plotting the posteriors from both models
-----------------------------------------
+
+# Plotting the posteriors from both models
 
 Let's extract the medians posterior distributions of the expected values of $\alpha_j$ and their 95% credible intervals:
 ```{r}

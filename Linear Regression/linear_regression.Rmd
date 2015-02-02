@@ -1,7 +1,7 @@
 ---
 title: "Linear regression"
 author: "Petr Keil"
-date: "January 2015"
+date: "February 2015"
 output:
   html_document:
     highlight: pygments
@@ -9,6 +9,8 @@ output:
     theme: cerulean
   pdf_document: default
 ---
+
+Here we will do classical linear regression in a Bayesian setting. We will also show the difference between **credible intervals** and  **prediction intervals**.
 
 # The data
 
@@ -18,7 +20,7 @@ We will download data from **Michael Crawley's R Book**, Chapter 10 (Linear Regr
 ![danaus caterpillar figure](figure/Tannic_acid.png)
 
 ```{r}
-  catepil <- read.table("http://www.bio.ic.ac.uk/research/mjcraw/therbook/data/regression.txt", sep="\t", header=TRUE)
+  catepil <- read.table("http://goo.gl/odmkOq", sep="\t", header=TRUE)
   catepil
 ```
 
@@ -39,8 +41,11 @@ An alternative ("Bayesian"") version:
 $$ \mu_i = a + b \times tannin_i $$
 $$ growth_i \sim Normal(\mu_i, \sigma) $$
 
+**Note:** The notations are mathematically equivalent, 
+but the Bayesian notation shows, in my opinion, more directly 
+how we think about the stochastic part of the model.
 
-# Fitting the model using a predefined function (least squares)
+# Fitting ordinary least squares (OLS) regression
 
 ```{r, fig.width=4, fig.height=4}
   model.lm <- lm(growth~tannin, data=catepil)
@@ -114,7 +119,7 @@ plot(model.fit)
 
 # The full Bayesian output, predictions and all that
 
-Here we will use library ```rjags``` that gives more control over the MCMC (as opposed to ```R2jags```):
+**Beware:** Here we will use library ```rjags``` that gives more control over the MCMC (as opposed to ```R2jags```):
 
 ```{r, fig.width=4, fig.height=4, tidy=FALSE, message=FALSE, warning=FALSE}
 library(rjags)

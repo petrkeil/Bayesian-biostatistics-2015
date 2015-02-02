@@ -1,7 +1,7 @@
 Bayesian resources
 ========================================================
 author: Petr Keil
-date: February 2014
+date: February 2015
 
 Software
 ========================================================
@@ -10,6 +10,7 @@ Software
 - The software that made Bayesian analysis popular.
 - Has a GUI, but can also be commanded from **R**.
 - Great set of example models.
+- Useful for spatial analysis.
 - Difficult to debug, somewhat unpredictable.
 
 **R packages for OpenBUGS**

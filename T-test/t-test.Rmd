@@ -1,8 +1,18 @@
-T-test
-========================================================
+---
+title: "T-test"
+author: "Petr Keil"
+date: "February 2015"
+output:
+  html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: cerulean
+  pdf_document: default
+---
 
-The data
---------
+In this lesson we will implement a Bayesian version of the classical T-test. We will also explore some ways to **summarize the JAGS output**, and we will introduce the concept of **derived quantity**.
+
+# The data
 
 ```{r, echo=FALSE}
   # the hidden data generating procedure
@@ -24,9 +34,9 @@ We will use the example from **Marc Kery's Introduction to WinBUGS for Ecologist
 
 ![](figure/falcon.png)
 
-Let's load the data and have a look at them:
+Let's load the data and have a look at the data:
 
-```{r, tidy=FALSE}
+```{r, tidy=FALSE, fig.width=4, fig.height=5}
   falcon <- read.csv("http://www.petrkeil.com/wp-content/uploads/2014/02/falcon.csv")
   summary(falcon)
   boxplot(wingspan ~ male, data=falcon, 
@@ -34,10 +44,10 @@ Let's load the data and have a look at them:
           ylab="Wingspan [cm]",
           col="grey")
 ```
-********************************************************************************
 
-The classical frequentist solutions in R
-----------------------------------------
+
+# The classical frequentist solution in R
+
 
 We can use the classical two-sample ```t.test()```: 
 ```{r}
@@ -46,30 +56,33 @@ y <- falcon$wingspan[falcon$male==0]
 t.test(x, y)
 ```
 
-Which should be equivalent to ```lm()```:
-```{r}
+**Note:** this can also be done by ```lm()```:
+```{r, eval=FALSE}
 lm1 <- lm(wingspan ~ male, data=falcon)
 summary(lm1)
 ```
 
-Which should be equivalent to ```glm()```:
-```{r}
+... or by ```glm()```:
+```{r, eval=FALSE}
 glm1 <- glm(wingspan ~ male, data=falcon)
 summary(glm1)
 ```
 
-********************************************************************************
 
-The dumb but didactic Bayesian solution
-------------------------------------------
+# The didactic Bayesian solution
+
+We assume the each males and females each have their own Normal distribution, from which the wingspans are drawn:
 
 $y_m \sim Normal(\mu_m, \sigma)$
 
 $y_f \sim Normal(\mu_f, \sigma)$
 
+Note that the variance ($\sigma$) is the same in both groups.
+
 This is the hypothesis that we test:
 $\delta = \mu_f - \mu_m \neq 0$
-We can actually ask even more directly: **What is the mean difference between female and male wingspan ($\delta$)?**
+
+But we can actually ask even more directly: **What is the mean difference ($\delta$) between female and male wingspan?**
 
 Here is how we prepare the data for JAGS:
 ```{r, tidy=FALSE}
@@ -118,7 +131,7 @@ model
 ```
 
 The MCMC sampling done by ```jags()``` function:
-```{r, tidy=FALSE, message=FALSE, warning=FALSE}
+```{r, tidy=FALSE, message=FALSE, warning=FALSE, fig.height=10}
 model.fit <- jags(data=falcon.data.1, 
                model.file="t-test.bug",
                parameters.to.save=c("mu.f", "mu.m", "sigma", "delta"),
@@ -131,15 +144,16 @@ plot(as.mcmc(model.fit))
 model.fit
 ```
 
-********************************************************************************
 
-The model - the standard solution
----------------------------------
+# The conventional Bayesian solution
+
+Alternativelly, you can also specify the model in a more conventional way:
+
 $\mu_i = \mu_f + \delta \times male_i$
 
 $y_i \sim Normal(\mu_i, \sigma)$
 
-Preparing the data for JAGS:
+Preparing the data for JAGS is somewhat different than above:
 ```{r, tidy=FALSE}
 falcon.data.2 <- list(y=falcon$wingspan,
                       male=falcon$male,
@@ -173,7 +187,7 @@ model
 ```
 
 The MCMC sampling done by ```jags()``` function:
-```{r, tidy=FALSE, message=FALSE, warning=FALSE}
+```{r, tidy=FALSE, message=FALSE, warning=FALSE, fig.height=10}
 model.fit <- jags(data=falcon.data.2, 
                model.file="t-test2.bug",
                parameters.to.save=c("mu.f", "mu.m", "sigma", "delta"),

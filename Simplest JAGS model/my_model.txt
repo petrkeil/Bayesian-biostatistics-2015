@@ -1,0 +1,12 @@
+
+model
+{
+  # prior
+    lambda ~ dunif(0, 100)
+
+  # likelihood
+    for(i in 1:N)
+    {
+      y[i] ~ dpois(lambda)    
+    }
+}

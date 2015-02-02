@@ -1,0 +1,140 @@
+First real model in JAGS
+========================================================
+author: Petr Keil
+date: February 2015
+
+JAGS - preparing the data
+========================================================
+![](thereva.png)
+
+*Pandivirilia eximia* (Meigen 1820), family *Therevidae*
+
+JAGS - preparing the data
+========================================================
+![](trunk.png)
+
+Our data are **counts of larvae** sampled from underneath 
+logs in a temperate primeval forest.
+
+JAGS - preparing the data
+========================================================
+```{r}
+y <- c(23,17,25,28,38,18,32,51,
+       32,41,51,33,21,52,11,19)
+N <- length(y)
+
+my.data <- list(y=y, N=N)
+my.data
+```
+
+Bayes rule and the JAGS syntax
+========================================================
+ 
+$$p(\theta|y) = \frac {p(\theta) \times p(y|\theta)}{p(y)}$$
+
+where $\theta$ are model parameters, and $y$ are the data
+
+$p(y|\theta)$ ... likelihood
+
+$p(\theta)$ ... prior
+
+$p(\theta|y)$ ... posterior
+
+$p(y)$ ... the horrible thing
+
+
+JAGS - model specification
+========================================================
+This is the model that we will fit:
+$y_i \sim Poisson(\lambda)$
+
+```
+model
+{
+  # p(lambda) 
+  
+  # p(y|lambda)
+  
+}
+```
+
+JAGS - model specification
+========================================================
+This is the model that we will fit:
+$y_i \sim Poisson(\lambda)$
+
+```
+model
+{
+  # p(lambda) ... prior
+  
+  # p(y|lambda) ... likelihood
+  
+}
+```
+
+JAGS - model specification
+========================================================
+This is the model that we will fit:
+$y_i \sim Poisson(\lambda)$
+
+```
+model
+{
+  # prior
+    lammbda ~ dunif(0, 100)
+
+  # likelihood
+    for(i in 1:N)
+    {
+      y[i] ~ dpois(lambda)    
+    }
+}
+```
+
+JAGS - model specification
+========================================================
+We will dump the model to a file using ```cat("", file="")```
+
+```{r}
+cat("
+model
+{
+  # prior
+    lambda ~ dunif(0, 100)
+
+  # likelihood
+    for(i in 1:N)
+    {
+      y[i] ~ dpois(lambda)    
+    }
+}
+", file="my_model.txt")
+```
+
+JAGS - model specification
+========================================================
+```{r, tidy=FALSE}
+library(R2jags)
+
+fitted.model <- jags(data=my.data,  model.file="my_model.txt", parameters.to.save="lambda", n.chains=3, n.iter=2000, n.burnin=1000)
+```
+
+JAGS - model specification
+========================================================
+```{r}
+  plot(as.mcmc(fitted.model))
+```
+
+JAGS - model specification
+========================================================
+```{r}
+  fitted.model
+```
+
+JAGS - model specification
+========================================================
+```{r}
+  plot(fitted.model)
+```
+
