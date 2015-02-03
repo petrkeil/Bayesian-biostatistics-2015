@@ -1,5 +1,14 @@
-Site occupancy model with imperfect detectability
-========================================================
+---
+title: "Site occupancy model with imperfect detectability"
+author: "Petr Keil"
+date: "February 2015"
+output:
+  html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: cerulean
+  pdf_document: default
+---
 
 ```{r, echo=FALSE}
 # n.site=150
@@ -36,42 +45,54 @@ Site occupancy model with imperfect detectability
 
 #  gentiana <- data.frame(humidity, y)
 ```
-********************************************************************************
 
-The Data
---------
+Here we will go through a simple hierarchical model of species occupancy that
+accounts for imperfect detectability of a species.
+
+# The Data
+
 We will work with **Marc Kery's data from chapter 20** of his Introduction to WinBUGS for ecologists.
-The data describe detections of *Gentianella germanica* at 150 sites, each visited 3 times. We wish to estimate the relationship between P of occurence, and a humidity index. However, we also know that the detectability of the species depends on humidity itself.
+The data describe detections of *Gentianella germanica* at 150 sites, each visited 3 times. We wish to estimate the relationship between $P$ of occurence, and a humidity index. However, we also know that the detectability of the species depends on humidity itself.
 
 ![](figure/gentiana.png)
 
 
-Loading the data from the web
+Loading the data from the web:
 ```{r}
   gentiana <- read.csv("http://www.petrkeil.com/wp-content/uploads/2014/02/gentiana.csv")
   gentiana <- gentiana[,-1]
 ```
 
-The "naive" analysis by GLM:
-```{r, tidy=FALSE}
-  # fitting classical LOGISTIC REGRESSION of presence-absence data
-  naive.m1 <- glm(pres.abs~humidity, data=gentiana, family="binomial")
-  
-  # or the response can be number of successes out of 3 visits
-  succ.fail <- cbind(gentiana$pres.abs, 3-gentiana$pres.abs)
-  naive.m2 <- glm(succ.fail~humidity, data=gentiana, family="binomial")
-  
-  # plotting the data and the predictions
-  plot(gentiana$humidity, gentiana$pres.abs,
-       xlab="Humidity index", ylab="Gentiana detections")
-  lines(gentiana$humidity, predict(naive.m1, type="response"))
-  lines(gentiana$humidity, predict(naive.m2, type="response"), lty=2)
-
+Explore the data a little bit:
+```{r}
+head(gentiana)
+nrow(gentiana)
 ```
 
-********************************************************************************
-Bayesian model with imperfect detection
----------------------------------------
+## The "naive" analysis by GLM:
+
+This is the classical LOGISTIC REGRESSION for presence-absence data:
+```{r, tidy=FALSE}
+  naive.m1 <- glm(pres.abs~humidity, data=gentiana, family="binomial")
+```
+
+Or the response can be number of successes out of 3 visits:
+```{r}
+  succ.fail <- cbind(gentiana$pres.abs, 3-gentiana$pres.abs)
+  naive.m2 <- glm(succ.fail~humidity, data=gentiana, family="binomial")
+```
+
+Plotting the data and the predictions of the two naive models:
+```{r}
+  plot(gentiana$humidity, gentiana$pres.abs,
+       xlab="Humidity index", ylab="Gentiana detections")
+  lines(gentiana$humidity, predict(naive.m1, type="response"), col="blue")
+  lines(gentiana$humidity, predict(naive.m2, type="response"), col="red")
+  legend("right", lwd=c(2,2), col=c("blue","red"),
+         legend=c("model1","model2"))
+```
+
+# Bayesian model with imperfect detection
 
 **Model definition**
 
@@ -88,8 +109,6 @@ $p_{ij}=f(environment_{ij})$
 and that
 
 $\psi_i=f(environment_i)$
-
-********************************************************************************
 
 Let's prepare the data for JAGS:
 ```{r}
@@ -108,13 +127,9 @@ Our favourite library:
   library(R2jags)
 ```
 
-********************************************************************************
-
 Here is a little guide for specifying **priors for logistic regression**:
 
 ![](figure/logit_prior.png)
-
-********************************************************************************
 
 The model:
 ```{r, tidy=FALSE, message=FALSE, warning=FALSE}
@@ -144,32 +159,33 @@ The model:
   ", file="gentiana.txt")
 ```
   
-Initial values are really important for models with **latent variables**! You have to specify them, otherwise it won't work.
+**Initial values are really important for models with latent variables!** You have to specify them, otherwise it won't work.
 ```{r, message=FALSE, warning=FALSE, tidy=FALSE}
   zst <- apply(X=y, MARGIN=1, FUN=max)
   
   inits <- function(){list(z=zst, alpha.occ=rnorm(1),
-                beta.occ=rnorm(1),
-                alpha.det=rnorm(1),
-                beta.det=rnorm(1))}
+                      beta.occ=rnorm(1),
+                      alpha.det=rnorm(1),
+                      beta.det=rnorm(1))}
 ```
 
-Now we can run the model:
+Now we can run the model and monitor the parameter $\psi$ (the actual 
+probability of presence):
 ```{r, tidy=FALSE}
   model.fit <- jags(data=gentiana.data, 
-                 model.file="gentiana.txt",
-                 parameters.to.save=c("psi"),
-                 n.chains=1,
-                 n.iter=2000,
-                 n.burnin=1000,
-                 inits=inits, 
-                 DIC=FALSE)
+                    model.file="gentiana.txt",
+                    parameters.to.save=c("psi"),
+                    n.chains=1,
+                    n.iter=2000,
+                    n.burnin=1000,
+                    inits=inits, 
+                    DIC=FALSE)
 ```
 
-
+Let's plot data together with the expected value and its credible intervals:
 ```{r}
 plot(gentiana$humidity, gentiana$pres.abs,
-       xlab="Humidity index", ylab="Gentiana detections")
+       xlab="Humidity index", ylab="Probability of presence")
 lines(gentiana$humidity, model.fit$BUGSoutput$summary[,'50%'])
 lines(gentiana$humidity, model.fit$BUGSoutput$summary[,'2.5%'], lty=2)
 lines(gentiana$humidity, model.fit$BUGSoutput$summary[,'97.5%'], lty=2)

@@ -1,27 +1,37 @@
 Bayesian Biostatistics - Conclusions
 ========================================================
 author: Petr Keil
-date: Feb 2014
+date: February 2015
 
 You should now be able to use
 ========================================================
-- likelihood, maximum likelihood, deviance.
-- the basic prob. distributions.
-- distinguish the deterministic and stoch. model parts
-- posterior, prior, likelihood and their connection
+- Likelihood, maximum likelihood, deviance.
+- The basic prob. distributions.
+- Distinguish the deterministic and stoch. model parts.
+- Posterior, prior, likelihood and their connection.
 - MCMC
-- credible and prediction intervals
-- elementary model specification in JAGS
-- GLM, occupancy models, autoregression, random effects
+- Credible and prediction intervals.
+- Elementary model specification in JAGS.
+- GLM, occupancy models, autoregression, random effects.
 
-Some really important advice
+Some advice
 ========================================================
 - ALWAYS start with simple models.
 - Make your models cool and complex only AFTER your simple models run.
 
-Some really important advice
+Some advice
+========================================================
+Learn your probability distributions. The useful ones
+are: 
+* Normal, Poisson, Binomial, Uniform
+* Beta, Gamma, Exponential, Negative Binomial, Lognormal
+* Categoriacal, Multinomial, Double exponential
+* Truncated and censored distributions
+
+Some advice
 ========================================================
 - Copy other people's codes and models.
+- Copy your own codes and models.
 
 %#&$*! IT STILL DOES NOT RUN
 ========================================================
@@ -34,7 +44,7 @@ Some really important advice
 6. Same with Bernoulli -> logit link.
 7. Standardize and center your variables, **especially for log link**.
 
-And finally:
+And finally
 ========================================================
  - If you have a hammer, every problem turns out to be a nail.
  - Do not forget the biology for all the stats.
