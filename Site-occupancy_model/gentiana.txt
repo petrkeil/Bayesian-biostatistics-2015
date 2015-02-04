@@ -12,12 +12,12 @@
       {
         z[i] ~ dbern(psi[i]) # true occupancy at site i
         logit(psi[i]) <- alpha.occ + beta.occ*humidity[i] 
-     
+        logit(p[i]) <- alpha.det + beta.det*humidity[i] # detection probability
+        eff.p[i] <- z[i] * p[i] # p of observing the present individual
+        
         for(j in 1:N.visit)
-        {
-           logit(p[i,j]) <- alpha.det + beta.det*humidity[i] # detection probability
-           eff.p[i,j] <- z[i] * p[i, j] # p of observing the present individual
-           y[i,j] ~ dbern(eff.p[i,j]) # detection/non-detection at [i,j]
+        {           
+           y[i,j] ~ dbern(eff.p[i]) # detection/non-detection at [i,j]
         }  
       }
     }

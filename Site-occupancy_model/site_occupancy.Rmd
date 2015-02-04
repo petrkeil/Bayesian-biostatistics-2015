@@ -78,7 +78,7 @@ This is the classical LOGISTIC REGRESSION for presence-absence data:
 
 Or the response can be number of successes out of 3 visits:
 ```{r}
-  succ.fail <- cbind(gentiana$pres.abs, 3-gentiana$pres.abs)
+  succ.fail <- cbind(rowSums(gentiana[,2:4]), rowSums(gentiana[,2:4]))
   naive.m2 <- glm(succ.fail~humidity, data=gentiana, family="binomial")
 ```
 
@@ -98,7 +98,7 @@ Plotting the data and the predictions of the two naive models:
 
 $z_i \sim Bernoulli(\psi_i)$
 
-$y_{ij} \sim (z_i \times p_{ij})$
+$y_{ij} \sim Bernoulli(z_i \times p_{i})$
 
 Where $z_i$ is the unobserved but true occurrence, $\psi_i$ is probability of occurrence, $y_{ij}$ is the detection or non-detection (the actual data) at site $i$ during visit $j$, and $p_{ij}$ is the detection probability of the species.
 
@@ -147,12 +147,12 @@ The model:
       {
         z[i] ~ dbern(psi[i]) # true occupancy at site i
         logit(psi[i]) <- alpha.occ + beta.occ*humidity[i] 
-     
+        logit(p[i]) <- alpha.det + beta.det*humidity[i] # detection probability
+        eff.p[i] <- z[i] * p[i] # p of observing the present individual
+        
         for(j in 1:N.visit)
-        {
-           logit(p[i,j]) <- alpha.det + beta.det*humidity[i] # detection probability
-           eff.p[i,j] <- z[i] * p[i, j] # p of observing the present individual
-           y[i,j] ~ dbern(eff.p[i,j]) # detection/non-detection at [i,j]
+        {           
+           y[i,j] ~ dbern(eff.p[i]) # detection/non-detection at [i,j]
         }  
       }
     }
